@@ -42,8 +42,7 @@ int main(){
     char inputStr[inLen]; //stores input command given by the user
     char* args[argLen]; //stores all the arguments of the input command eg. args[0]="ls",args[1]=[-a]..
     int VerLen,VerArg; //Those values are meant to test whether the input is out of the variables bounds
-    char exit='0',child_parent='0';
-
+    
     TakeInput:
     //Taking the input and preparing it for the operations
     fgets(inputStr,inLen,stdin); //Takes input
@@ -60,9 +59,10 @@ int main(){
         goto TakeInput;
     }
     //checks if it is the exit command
-    if(strcmp(args[0],"exit")){
+    if(strcmp(args[0],"exit") == 0){
         goto Terminate;
     }
+    //forking main process to a parent and a child
     int id = fork();
     if(id != 0){
         wait();
