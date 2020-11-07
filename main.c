@@ -69,7 +69,10 @@ int main(){
         goto TakeInput;
     }
     else{
-        execvp(args[0],args);
+        int valid = execvp(args[0],args);
+        if(valid < 0 ){
+            printf("Command not found\n");
+        }
         exit(0);
     }
     Terminate:
