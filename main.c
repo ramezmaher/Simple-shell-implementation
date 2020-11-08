@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/wait.h>
 
 #define inLen 1000
 #define argLen 50
@@ -58,7 +59,7 @@ void write_to_log(int sig){
     struct tm * timeinfo;
     time ( &rawtime );
     timeinfo = localtime ( &rawtime );
-    fprintf(file_pointer,"ID= %d  Status= %d  Time:%s",pid,status,asctime (timeinfo));
+    fprintf(file_pointer,"ID= %d  Status= %d  Date&Time:%s",pid,status,asctime (timeinfo));
     fclose(file_pointer);
 }
 
@@ -109,7 +110,7 @@ int main(){
     if(id != 0){
         signal(SIGCHLD,write_to_log);
         if(!Flag){
-            wait();
+            wait(NULL);
         }
         goto TakeInput;
     }
