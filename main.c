@@ -62,6 +62,14 @@ int main(){
     if(strcmp(args[0],"exit") == 0){
         goto Terminate;
     }
+    //Implements the change directory command
+    if(strcmp(args[0],"cd") == 0){
+        int val = chdir(args[1]);
+        if(val < 0 ){
+            perror("Faild to change directory!\n");
+        }
+        goto TakeInput;
+    }
     //forking main process to a parent and a child
     int id = fork();
     if(id != 0){
