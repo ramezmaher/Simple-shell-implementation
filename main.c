@@ -54,7 +54,7 @@ int main(){
         goto TakeInput;
     }
     //checks if empty command
-    if(VerLen < 2){
+    if(VerLen < 1 || VerArg < 1){
         printf("No command\n");
         goto TakeInput;
     }
@@ -64,9 +64,14 @@ int main(){
     }
     //Implements the change directory command
     if(strcmp(args[0],"cd") == 0){
-        int val = chdir(args[1]);
-        if(val < 0 ){
-            perror("Faild to change directory!\n");
+        if(VerArg < 2){
+            chdir("/home/");
+        }
+        else{
+            int val = chdir(args[1]);
+            if(val < 0 ){
+                perror("Faild to change directory!\n");
+            }
         }
         goto TakeInput;
     }
@@ -77,9 +82,10 @@ int main(){
         goto TakeInput;
     }
     else{
+        //Executes the commands given by the user, prints error message if command not found.Terminates child process after finishing.
         int valid = execvp(args[0],args);
         if(valid < 0 ){
-            printf("Command not found\n");
+            perror("Command not found!\n");
         }
         exit(0);
     }
