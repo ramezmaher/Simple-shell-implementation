@@ -15,6 +15,15 @@ void print_args(char* str[]){
 
 }
 
+//This checks if command terminates with & to order a background working command, return 1 if so, and 0 if it does not contain &
+int checks_for_Ampercent(char* str[],int len){
+    if(strcmp(str[len-1],"&") == 0){
+        str[len-1] = '\0';
+        return 1;
+    }
+    return 0;
+}
+
 //This method divide the input string into smaller substrings representing the arguments of the command
 int divide_string(char input[],char* arr[]){
     int i=0;
@@ -42,7 +51,7 @@ int main(){
     char inputStr[inLen]; //stores input command given by the user
     char* args[argLen]; //stores all the arguments of the input command eg. args[0]="ls",args[1]=[-a]..
     int VerLen,VerArg; //Those values are meant to test whether the input is out of the variables bounds
-    
+
     TakeInput:
     //Taking the input and preparing it for the operations
     fgets(inputStr,inLen,stdin); //Takes input
@@ -75,10 +84,13 @@ int main(){
         }
         goto TakeInput;
     }
+    int Flag = checks_for_Ampercent(args,VerArg);
     //forking main process to a parent and a child
     int id = fork();
     if(id != 0){
-        wait();
+        if(!Flag){
+            wait();
+        }
         goto TakeInput;
     }
     else{
