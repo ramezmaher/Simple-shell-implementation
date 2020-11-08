@@ -2,9 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #define inLen 1000
 #define argLen 50
+
+//Create log file
+FILE * file_pointer;
 
 //Used for debugging
 void print_args(char* str[]){
@@ -45,12 +49,27 @@ int delete_newLine(char str[]){
     return i;
 }
 
-int main(){
+//Write to the log file
+void write_to_log(int sig){
+    __pid_t pid;
+    int status;
+    file_pointer = fopen("LOGFILE.log","a");
+    time_t rawtime;
+    struct tm * timeinfo;
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+    fprintf(file_pointer,"ID= %d  Status= %d  Time:%s",pid,status,asctime (timeinfo));
+    fclose(file_pointer);
+}
 
+int main(){
     //variables definitions
     char inputStr[inLen]; //stores input command given by the user
     char* args[argLen]; //stores all the arguments of the input command eg. args[0]="ls",args[1]=[-a]..
     int VerLen,VerArg; //Those values are meant to test whether the input is out of the variables bounds
+    file_pointer = fopen("LOGFILE.log","w");
+    fprintf(file_pointer,"Log file:\n");
+    fclose(file_pointer);
 
     TakeInput:
     //Taking the input and preparing it for the operations
@@ -88,6 +107,7 @@ int main(){
     //forking main process to a parent and a child
     int id = fork();
     if(id != 0){
+        signal(SIGCHLD,write_to_log);
         if(!Flag){
             wait();
         }
