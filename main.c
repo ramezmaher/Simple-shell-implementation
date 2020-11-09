@@ -73,7 +73,7 @@ int main(){
     char* args[argLen]; //stores all the arguments of the input command eg. args[0]="ls",args[1]=[-a]..
     int VerLen,VerArg; //Those values are meant to test whether the input is out of the variables bounds
     int j=0;
-    
+
     char* dummy;
     TakeInput:
     //Taking the input and preparing it for the operations
@@ -98,6 +98,7 @@ int main(){
     if(strcmp(args[0],"cd") == 0){
         if(VerArg < 2){
             chdir("/home/ramez");
+            write_log(args[0]);
         }
         else{
             int val = chdir(args[1]);
@@ -117,32 +118,35 @@ int main(){
         perror("Error while opening the pipe!\n");
         return 1;
     }
-    close(p[1]);
-    close(p[0]);
-    //forking main process to a parent and a child 
+    //forking main process to a parent and a child
     int id = fork();
     if(id == 0){
         //Executes the commands given by the user, prints error message if command not found.Terminates child process after finishing.
         int valid = execvp(args[0],args);
-        if(valid < 0 ){
-            perror("Command not found!\n");
-        }
         open(p[1]);
-        write(p[1],&valid,sizeof(int));
+        if(valid == -1 ){
+            perror("Command not found!\n");
+            write(p[1],&valid,sizeof(int));
+        }
+        else{
+            printf("Done\n");
+            write(p[1],&id,sizeof(int));
+        }
         close(p[1]);
         exit(0);
     }
     else{
+        close(p[1]);
         int cid;
         if(!Flag){
             wait(NULL);
+            int d =0;
             open(p[0]);
-            int d;
-            read(p[0],&d,sizeof(int));
-            if(d >= 0 ){
+            while(read(p[0],&d,sizeof(int))>0);
+            close(p[0]);
+            if(d != -1 ){
                 write_log(inputStr);
             }
-            close(p[0]);
         }
         else{
             ind[CurrentIndex] = args[0];
