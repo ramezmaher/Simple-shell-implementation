@@ -3,13 +3,16 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <signal.h>
 #include <sys/wait.h>
-
 #define inLen 1000
 #define argLen 50
 
 //Create log file
 FILE * file_pointer;
+
+char* ind[1000000];
+int temp;
 
 //Used for debugging
 void print_args(char* str[]){
@@ -50,28 +53,23 @@ int delete_newLine(char str[]){
     return i;
 }
 
-//Write to the log file
-void write_to_log(int sig){
-    __pid_t pid;
-    int status;
+void write_log(int sig){
     file_pointer = fopen("LOGFILE.log","a");
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
     timeinfo = localtime ( &rawtime );
-    fprintf(file_pointer,"ID= %d  Status= %d  Date&Time:%s",pid,status,asctime (timeinfo));
+    fprintf(file_pointer,"Process %s has terminated -- Date&Time:%s\n",ind[temp],asctime (timeinfo));
     fclose(file_pointer);
 }
-
 int main(){
+    file_pointer = fopen("LOGFILE.log","w");
+    fprintf(file_pointer,"Log file:\n");
+    fclose(file_pointer);
     //variables definitions
     char inputStr[inLen]; //stores input command given by the user
     char* args[argLen]; //stores all the arguments of the input command eg. args[0]="ls",args[1]=[-a]..
     int VerLen,VerArg; //Those values are meant to test whether the input is out of the variables bounds
-    file_pointer = fopen("LOGFILE.log","w");
-    fprintf(file_pointer,"Log file:\n");
-    fclose(file_pointer);
-
     TakeInput:
     //Taking the input and preparing it for the operations
     fgets(inputStr,inLen,stdin); //Takes input
@@ -94,7 +92,7 @@ int main(){
     //Implements the change directory command
     if(strcmp(args[0],"cd") == 0){
         if(VerArg < 2){
-            chdir("/home/");
+            chdir("/home/ramez");
         }
         else{
             int val = chdir(args[1]);
@@ -103,18 +101,31 @@ int main(){
             }
         }
         goto TakeInput;
-    }
+        }
     int Flag = checks_for_Ampercent(args,VerArg);
-    //forking main process to a parent and a child
+    //pipe for the communication between parent and child
+    int p[2];
+    if(pipe(p) == -1){
+        perror("Error while opening the pipe!\n");
+        return 1;
+    }
+
+    //forking main process to a parent and a child 
     int id = fork();
     if(id != 0){
-        signal(SIGCHLD,write_to_log);
+        signal(SIGCHLD,write_log);
         if(!Flag){
             wait(NULL);
         }
+        int cid;
+        read(p[0], &cid,sizeof(int));
+        ind[cid] = inputStr;
+        temp = cid;
         goto TakeInput;
     }
     else{
+        pid_t pid = getpid();
+        write(p[1], &pid,sizeof(int));
         //Executes the commands given by the user, prints error message if command not found.Terminates child process after finishing.
         int valid = execvp(args[0],args);
         if(valid < 0 ){
