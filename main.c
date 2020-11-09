@@ -11,7 +11,7 @@
 //Create log file
 FILE * file_pointer;
 
-char* ind[1000];
+pid_t ind[1000];
 int CurrentIndex=0;
 
 //Used for debugging
@@ -119,7 +119,7 @@ int main(){
         return 1;
     }
     //forking main process to a parent and a child
-    int id = fork();
+    pid_t id = fork();
     if(id == 0){
         //Executes the commands given by the user, prints error message if command not found.Terminates child process after finishing.
         int valid = execvp(args[0],args);
@@ -137,7 +137,6 @@ int main(){
     }
     else{
         close(p[1]);
-        int cid;
         if(!Flag){
             wait(NULL);
             int d =0;
@@ -149,14 +148,21 @@ int main(){
             }
         }
         else{
-            ind[CurrentIndex] = args[0];
+            ind[CurrentIndex] = id;
             CurrentIndex++;
         }
         goto TakeInput;
     }
     Terminate:
     for(j;j<CurrentIndex;j++){
-        write_log(ind[j]);
+       kill(ind[j],SIGKILL);
     }
+    file_pointer = fopen("/home/ramez/College/OS/Simple_shell/LOGFILE.log","a+");
+    time_t rawtime;
+    struct tm * timeinfo;
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+    fprintf(file_pointer,"All background process has terminated -- Date&Time:%s\n",asctime (timeinfo));
+    fclose(file_pointer);
     return 0;
 }
