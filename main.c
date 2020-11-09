@@ -11,8 +11,8 @@
 //Create log file
 FILE * file_pointer;
 
-char* ind[1000000];
-int temp;
+char* ind[1000];
+int CurrentIndex=0;
 
 //Used for debugging
 void print_args(char* str[]){
@@ -53,23 +53,28 @@ int delete_newLine(char str[]){
     return i;
 }
 
-void write_log(int sig){
-    file_pointer = fopen("LOGFILE.log","a");
+//This method writes to a log file
+void write_log(char s[]){
+    file_pointer = fopen("/home/ramez/College/OS/Simple_shell/LOGFILE.log","a+");
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
     timeinfo = localtime ( &rawtime );
-    fprintf(file_pointer,"Process %s has terminated -- Date&Time:%s\n",ind[temp],asctime (timeinfo));
+    fprintf(file_pointer,"Process %s has terminated -- Date&Time:%s\n",s,asctime (timeinfo));
     fclose(file_pointer);
 }
+
 int main(){
-    file_pointer = fopen("LOGFILE.log","w");
+    file_pointer = fopen("/home/ramez/College/OS/Simple_shell/LOGFILE.log","w");
     fprintf(file_pointer,"Log file:\n");
     fclose(file_pointer);
     //variables definitions
     char inputStr[inLen]; //stores input command given by the user
     char* args[argLen]; //stores all the arguments of the input command eg. args[0]="ls",args[1]=[-a]..
     int VerLen,VerArg; //Those values are meant to test whether the input is out of the variables bounds
+    int j=0;
+    
+    char* dummy;
     TakeInput:
     //Taking the input and preparing it for the operations
     fgets(inputStr,inLen,stdin); //Takes input
@@ -99,6 +104,9 @@ int main(){
             if(val < 0 ){
                 perror("Faild to change directory!\n");
             }
+            else{
+                write_log(args[0]);
+            }
         }
         goto TakeInput;
         }
@@ -109,30 +117,42 @@ int main(){
         perror("Error while opening the pipe!\n");
         return 1;
     }
-
+    close(p[1]);
+    close(p[0]);
     //forking main process to a parent and a child 
     int id = fork();
-    if(id != 0){
-        signal(SIGCHLD,write_log);
-        if(!Flag){
-            wait(NULL);
-        }
-        int cid;
-        read(p[0], &cid,sizeof(int));
-        ind[cid] = inputStr;
-        temp = cid;
-        goto TakeInput;
-    }
-    else{
-        pid_t pid = getpid();
-        write(p[1], &pid,sizeof(int));
+    if(id == 0){
         //Executes the commands given by the user, prints error message if command not found.Terminates child process after finishing.
         int valid = execvp(args[0],args);
         if(valid < 0 ){
             perror("Command not found!\n");
         }
+        open(p[1]);
+        write(p[1],&valid,sizeof(int));
+        close(p[1]);
         exit(0);
     }
+    else{
+        int cid;
+        if(!Flag){
+            wait(NULL);
+            open(p[0]);
+            int d;
+            read(p[0],&d,sizeof(int));
+            if(d >= 0 ){
+                write_log(inputStr);
+            }
+            close(p[0]);
+        }
+        else{
+            ind[CurrentIndex] = args[0];
+            CurrentIndex++;
+        }
+        goto TakeInput;
+    }
     Terminate:
+    for(j;j<CurrentIndex;j++){
+        write_log(ind[j]);
+    }
     return 0;
 }
