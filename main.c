@@ -11,6 +11,7 @@
 //Create log file
 FILE * file_pointer;
 
+//Stores the ids of all backgrounf processes inorder to terminate them
 pid_t ind[1000];
 int CurrentIndex=0;
 
@@ -65,16 +66,17 @@ void write_log(char s[]){
 }
 
 int main(){
+    //log file setup
     file_pointer = fopen("/home/ramez/College/OS/Simple_shell/LOGFILE.log","w");
     fprintf(file_pointer,"Log file:\n");
     fclose(file_pointer);
+
     //variables definitions
     char inputStr[inLen]; //stores input command given by the user
     char* args[argLen]; //stores all the arguments of the input command eg. args[0]="ls",args[1]=[-a]..
     int VerLen,VerArg; //Those values are meant to test whether the input is out of the variables bounds
     int j=0;
 
-    char* dummy;
     TakeInput:
     //Taking the input and preparing it for the operations
     fgets(inputStr,inLen,stdin); //Takes input
@@ -110,15 +112,16 @@ int main(){
             }
         }
         goto TakeInput;
-        }
+    }
+    //This flag inicates whether the command terminats with & or not which then results in a background process
     int Flag = checks_for_Ampercent(args,VerArg);
-    //pipe for the communication between parent and child
+    //pipe for the communication between parent and child,the pipe is used by the parent to know if the command passed to the child is valid or not.
     int p[2];
     if(pipe(p) == -1){
         perror("Error while opening the pipe!\n");
         return 1;
     }
-    //forking main process to a parent and a child
+    //forking main process to a parent and a child.
     pid_t id = fork();
     if(id == 0){
         //Executes the commands given by the user, prints error message if command not found.Terminates child process after finishing.
@@ -136,6 +139,7 @@ int main(){
         exit(0);
     }
     else{
+        //parent
         close(p[1]);
         if(!Flag){
             wait(NULL);
@@ -148,6 +152,7 @@ int main(){
             }
         }
         else{
+            //background process
             ind[CurrentIndex] = id;
             CurrentIndex++;
         }
@@ -155,7 +160,8 @@ int main(){
     }
     Terminate:
     for(j;j<CurrentIndex;j++){
-       kill(ind[j],SIGKILL);
+        //kills all background processes
+        kill(ind[j],SIGKILL);
     }
     file_pointer = fopen("/home/ramez/College/OS/Simple_shell/LOGFILE.log","a+");
     time_t rawtime;
