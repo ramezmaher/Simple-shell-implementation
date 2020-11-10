@@ -79,6 +79,7 @@ int main(){
 
     TakeInput:
     //Taking the input and preparing it for the operations
+    printf("MYSHELL$$:>");
     fgets(inputStr,inLen,stdin); //Takes input
     VerLen = delete_newLine(inputStr); //Removes the newLine character from the end of the input string
     VerArg = divide_string(inputStr,args); //Divide the string into smaller substrings & forming the arguments array of strings
@@ -168,7 +169,7 @@ int main(){
     struct tm * timeinfo;
     time ( &rawtime );
     timeinfo = localtime ( &rawtime );
-    fprintf(file_pointer,"All background process has terminated -- Date&Time:%s\n",asctime (timeinfo));
+    fprintf(file_pointer,"Shell terminated, all background process has terminated -- Date&Time:%s\n",asctime (timeinfo));
     fclose(file_pointer);
     return 0;
 }
